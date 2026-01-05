@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Vista AI!</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cascadia+Code&display=swap');
+
+    body { 
+      font-family: 'Cascadia Code', monospace; 
+      margin:0; 
+      background:#f9f9f9; 
+      display:flex; 
+      flex-direction:column; 
+      height:100vh;
+    }
+
+    .topbar {
+      display:flex; justify-content:space-between; align-items:center;
+      background:#eee; padding:10px;
+    }
+    .topbar button { 
+      background:#ccc; border:none; padding:5px 10px; cursor:pointer; 
+      font-family: 'Cascadia Code', monospace;
+    }
+    .topbar .title {
+      font-family:'Harrington', cursive; 
+      font-size: 22px;
+    }
+
+    .chatbox {
+      flex:1; 
+      padding:20px; 
+      overflow-y:auto; 
+    }
+    .message { 
+      background:#fff; padding:10px; margin:10px 0; border-radius:5px; 
+      animation: fadeIn 0.4s ease;
+    }
+    .like { font-size:12px; color:#888; cursor:pointer; margin-top:5px; }
+
+    @keyframes fadeIn {
+      from { opacity:0; transform: translateY(10px); }
+      to { opacity:1; transform: translateY(0); }
+    }
+
+    .inputbar {
+      position:fixed; bottom:0; left:0; width:100%;
+      display:flex; padding:10px;
+      background:rgba(0, 191, 255, 0.85);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.2);
+      border-top: 2px solid rgba(0, 255, 255, 0.6);
+    }
+
+    .inputbar input {
+      flex:1; padding:12px; border:none; border-radius:8px;
+      font-family: 'Cascadia Code', monospace;
+      background:#fff; color:#000;
+    }
+    .inputbar input::placeholder { color:#888; }
+
+    .inputbar button {
+      margin-left:10px; padding:12px 20px;
+      background:#009acd; color:#fff; border:none; border-radius:8px;
+      cursor:pointer; font-family: 'Cascadia Code', monospace;
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+    .inputbar button:hover {
+      background:#0078a0;
+      box-shadow: 0 0 8px rgba(0, 255, 255, 0.8);
+    }
+
+    #nameModal {
+      position:fixed; top:0; left:0; width:100%; height:100%;
+      background:rgba(0,0,0,0.5); display:flex; justify-content:center; align-items:center;
+      font-family: 'Cascadia Code', monospace;
+      z-index: 9999;
+    }
+    #nameModal .box {
+      background:#fff; padding:20px; border-radius:10px; text-align:center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      width:300px;
+    }
+    #nameModal input {
+      width:90%; padding:10px; margin-top:10px;
+      border:1px solid #ccc; border-radius:5px;
+      font-family: 'Cascadia Code', monospace;
+    }
+    #nameModal button {
+      margin-top:15px; padding:10px 20px;
+      background:#009acd; color:#fff; border:none; border-radius:5px;
+      cursor:pointer; font-family: 'Cascadia Code', monospace;
+    }
+    #nameModal button:hover { background:#0078a0; }
+  </style>
+</head>
+<body>
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <button onclick="goBack()">Back</button>
+    <div class="title">Vista AI!</div>
+    <button onclick="shareLink()">Share</button>
+  </div>
+
+  <!-- Chat area -->
+  <div class="chatbox" id="chatbox">
+    <div class="message">👋 Welcome to Vista AI! Please enter your name to start chatting.</div>
+  </div>
+
+  <!-- Input bar -->
+  <div class="inputbar">
+    <input id="userInput" type="text" placeholder="Ask Me Anything">
+    <button onclick="sendMessage()">Send</button>
+  </div>
+
+  <!-- Name Modal -->
+  <div id="nameModal">
+    <div class="box">
+      <p>What is your name?</p>
+      <input id="username" type="text" placeholder="Enter your name">
+      <button id="submitName">Submit</button>
+    </div>
+  </div>
+
+<script>
+  let userName = "";
+
+  function goBack() {
+    window.location.href = "/"; 
+  }
+
+  function shareLink() {
+    const url = "https://soloist.ai/vistainternationalofficial/vista-ai";
+    if (navigator.share) {
+      navigator.share({ title: "Vista AI", url }).catch(() => alert("Copy this link: " + url));
+    } else {
+      alert("Copy this link: " + url);
+    }
+  }
+
+  window.onload = () => {
+    document.getElementById("submitName").addEventListener("click", setName);
+  };
+
+  function setName() {
+    const input = document.getElementById("username");
+    userName = input.value.trim();
+
+    if(userName === "") {
+      alert("Please enter your name!");
+      return;
+    }
+
+    document.getElementById("nameModal").style.display = "none";
+    addMessage("Hi " + userName + ", How may I help you?");
+  }
+
+  function addMessage(text, fromAI=false) {
+    const chatbox = document.getElementById("chatbox");
+    const msg = document.createElement("div");
+    msg.className = "message";
+    msg.innerHTML = text;
+    if(fromAI){
+      const like = document.createElement("div");
+      like.className = "like";
+      like.innerText = "👍 Like";
+      msg.appendChild(like);
+    }
+    chatbox.appendChild(msg);
+    chatbox.scrollTop = chatbox.scrollHeight; // auto-scroll
+  }
+
+  async function sendMessage() {
+    const input = document.getElementById("userInput");
+    const text = input.value.trim();
+    if(!text) return;
+    addMessage(userName + ": " + text);
+    input.value = "";
+
+    // Loading indicator
+    const thinkingId = "thinking-" + Date.now();
+    addMessage(`<span id="${thinkingId}">⏳ Vista AI is thinking...</span>`, true);
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text }]}]
+        })
+      });
+      const data = await response.json();
+
+      let aiText = "Sorry, I couldn’t generate a response.";
+      if(data && data.candidates && data.candidates.length > 0) {
+        const parts = data.candidates[0].content.parts;
+        if(parts && parts.length > 0 && parts[0].text) {
+          aiText = parts[0].text;
+        }
+      }
+
+      addMessage(aiText, true);
+    } catch (err) {
+      addMessage("⚠️ Error connecting to AI service.", true);
+      console.error(err);
+    } finally {
+      const thinkingEl = document.getElementById(thinkingId);
+      if (thinkingEl) thinkingEl.parentElement.remove(); // remove loading message
+    }
+  }
+</script>
+
+</body>
+</html>
