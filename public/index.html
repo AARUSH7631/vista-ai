@@ -31,12 +31,18 @@
       flex:1; 
       padding:20px; 
       overflow-y:auto; 
+      background-color: #001f3f; /* dark navy background */
+      color: #f0f0f0;            /* light text */
     }
     .message { 
-      background:#fff; padding:10px; margin:10px 0; border-radius:5px; 
+      background:#003366;        /* lighter blue bubble */
+      color:#ffffff;             /* white text */
+      padding:10px; 
+      margin:10px 0; 
+      border-radius:5px; 
       animation: fadeIn 0.4s ease;
     }
-    .like { font-size:12px; color:#888; cursor:pointer; margin-top:5px; }
+    .like { font-size:12px; color:#ccc; cursor:pointer; margin-top:5px; }
 
     @keyframes fadeIn {
       from { opacity:0; transform: translateY(10px); }
@@ -100,7 +106,10 @@
   <div class="topbar">
     <button onclick="goBack()">Back</button>
     <div class="title">Vista AI!</div>
-    <button onclick="shareLink()">Share</button>
+    <div>
+      <button onclick="shareLink()">Share</button>
+      <button onclick="clearChat()">Clear Chat</button>
+    </div>
   </div>
 
   <!-- Chat area -->
@@ -139,6 +148,11 @@
     }
   }
 
+  function clearChat() {
+    const chatbox = document.getElementById("chatbox");
+    chatbox.innerHTML = '<div class="message">👋 Welcome to Vista AI! Please enter your name to start chatting.</div>';
+  }
+
   window.onload = () => {
     document.getElementById("submitName").addEventListener("click", setName);
   };
@@ -156,60 +170,4 @@
     addMessage("Hi " + userName + ", How may I help you?");
   }
 
-  function addMessage(text, fromAI=false) {
-    const chatbox = document.getElementById("chatbox");
-    const msg = document.createElement("div");
-    msg.className = "message";
-    msg.innerHTML = text;
-    if(fromAI){
-      const like = document.createElement("div");
-      like.className = "like";
-      like.innerText = "👍 Like";
-      msg.appendChild(like);
-    }
-    chatbox.appendChild(msg);
-    chatbox.scrollTop = chatbox.scrollHeight; // auto-scroll
-  }
-
-  async function sendMessage() {
-    const input = document.getElementById("userInput");
-    const text = input.value.trim();
-    if(!text) return;
-    addMessage(userName + ": " + text);
-    input.value = "";
-
-    // Loading indicator
-    const thinkingId = "thinking-" + Date.now();
-    addMessage(`<span id="${thinkingId}">⏳ Vista AI is thinking...</span>`, true);
-
-    try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text }]}]
-        })
-      });
-      const data = await response.json();
-
-      let aiText = "Sorry, I couldn’t generate a response.";
-      if(data && data.candidates && data.candidates.length > 0) {
-        const parts = data.candidates[0].content.parts;
-        if(parts && parts.length > 0 && parts[0].text) {
-          aiText = parts[0].text;
-        }
-      }
-
-      addMessage(aiText, true);
-    } catch (err) {
-      addMessage("⚠️ Error connecting to AI service.", true);
-      console.error(err);
-    } finally {
-      const thinkingEl = document.getElementById(thinkingId);
-      if (thinkingEl) thinkingEl.parentElement.remove(); // remove loading message
-    }
-  }
-</script>
-
-</body>
-</html>
+  function addMessage(text
