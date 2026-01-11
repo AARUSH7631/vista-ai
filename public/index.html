@@ -63,4 +63,26 @@
       font-family: 'Cascadia Code', monospace;
       background:#fff; color:#000;
     }
-    .inputbar input::placeholder
+    .inputbar input::placeholder {
+      color:#666;
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="title">Vista AI!</div>
+    <button onclick="clearChat()">Clear Chat</button>
+  </div>
+
+  <div class="chatbox" id="chatbox">
+    <!-- Messages will appear here -->
+  </div>
+
+  <div class="inputbar">
+    <input id="userInput" type="text" placeholder="Type your message..." />
+    <button onclick="sendMessage()">Send</button>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
